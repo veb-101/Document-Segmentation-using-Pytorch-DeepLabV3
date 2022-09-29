@@ -106,8 +106,7 @@ def find_dest(pts):
     return order_points(destination_corners)
 
 
-def scan(image_true=None, trained_model=None, image_size=384, BUFFER=10):
-    global preprocess_transforms
+def scan(image_true=None, trained_model=None, image_size=384, BUFFER=10, preprocess_transforms=image_preprocess_transforms()):
     IMAGE_SIZE = image_size
     half = IMAGE_SIZE // 2
 
@@ -259,7 +258,6 @@ DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
 if not DOWNLOADS_PATH.is_dir():
     DOWNLOADS_PATH.mkdir()
 
-preprocess_transforms = image_preprocess_transforms()
 IMAGE_SIZE = 384
 image = None
 output = None
