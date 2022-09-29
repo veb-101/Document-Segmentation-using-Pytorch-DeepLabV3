@@ -1,15 +1,11 @@
 # Install CPU version of torch and torchvision on streamlit cloud
 import os
 import gc
-import io
 import cv2
 import sys
 import time
-import base64
-import pathlib
 import subprocess
 import numpy as np
-from PIL import Image
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 
@@ -213,41 +209,36 @@ def scan(image_true=None, trained_model=None, image_size=384, BUFFER=10, preproc
     return final
 
 
-# Generating a link to download a particular image file.
-def get_image_download_link(img, filename, text):
-    buffered = io.BytesIO()
-    img.save(buffered, format="JPEG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
-    href = f'<a href="data:file/txt;base64,{img_str}" download="{filename}">{text}</a>'
-    return href
-
-
 def main(image, model=None):
-    # decode image
-    file_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)
-    image = cv2.imdecode(file_bytes, 1)
+    file_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)  # Read bytes
+    cv_image = cv2.imdecode(file_bytes, 1)[:, :, ::-1]  # Decode and convert to RGB
 
     col1, col2 = st.columns((1, 1))
 
     with col1:
         st.title("Input")
-        st.image(image, channels="BGR", use_column_width=True)
+        st.image(cv_image, channels="RGB", use_column_width=True)
 
     with col2:
         st.title("Scanned")
-        output = scan(image_true=image, trained_model=model, image_size=IMAGE_SIZE)
-        st.image(output, channels="BGR", use_column_width=True)
+        output = scan(image_true=cv_image, trained_model=model, image_size=IMAGE_SIZE)
+        st.image(output, channels="RGB", use_column_width=True)
+
+    # Download scanned file
+    if output is not None:
+        cv2.imwrite(file_save_path, output[:, :, ::-1])
+        with open(file_save_path, "rb") as file:
+            st.download_button(label="Download Scanned image", data=file, file_name=f"scanned_{file_upload.name}")
 
     return output
 
 
 # We create a downloads directory within the streamlit static asset directory
 # and we write output files to it
-STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
-DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
-if not DOWNLOADS_PATH.is_dir():
-    DOWNLOADS_PATH.mkdir()
+file_save_path = os.path.join(st.__path__[0], "static", "downloads", "output.png")
+os.makedirs(os.path.dirname(file_save_path), exist_ok=True)
 
+IMAGE_SIZE = 384
 
 # Streamlit Components
 st.set_page_config(
@@ -258,15 +249,10 @@ st.set_page_config(
     menu_items={"About": "### Visit www.learnopencv.com for more exciting tutorials!!!",},
 )
 
-st.title("Document Scanner: Semantic Segmentation using DeepLabV3-PyTorch")
-
-IMAGE_SIZE = 384
-image = None
-output = None
-result = None
-
 model_mbv3 = load_model_DL_MBV3(img_size=IMAGE_SIZE)
 model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
+
+st.title("Document Scanner: Semantic Segmentation using DeepLabV3-PyTorch")
 
 select_model = st.radio("Select Document Segmentation Model:", ("MobilenetV3-Large", "Resnet-50"), horizontal=True)
 model = model_mbv3 if select_model == "MobilenetV3-Large" else model_r50
@@ -275,19 +261,19 @@ tab1, tab2 = st.tabs(["Upload a Document", "Capture Document"])
 
 with tab1:
     # with st.form("my-form", clear_on_submit=True):
+    #     file_upload = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
     #     submitted = st.form_submit_button("Scan!")
-    # if submitted and uploaded_file is not None:
-    #     output = main(uploaded_file, model=model)
+    # if submitted and file_upload is not None:
+    #     output = main(file_upload, model=model)
 
-    uploaded_file = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
-    if uploaded_file:
-        output = main(uploaded_file, model=model)
+    file_upload = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
+    if file_upload:
+        _ = main(file_upload, model=model)
 
 with tab2:
     run = st.checkbox("Start Camera")
 
     if run:
-        uploaded_file = st.camera_input("Capture Document", disabled=not run)
-
-        if uploaded_file:
-            output = main(uploaded_file, model=model)
+        file_upload = st.camera_input("Capture Document", disabled=not run)
+        if file_upload:
+            _ = main(file_upload, model=model)
