@@ -1,5 +1,6 @@
 # Install CPU version of torch and torchvision on streamlit cloud
 import os
+import io
 import gc
 import cv2
 import sys
@@ -8,7 +9,7 @@ import subprocess
 import numpy as np
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
-
+import PIL
 
 try:
     import torch
@@ -209,6 +210,14 @@ def scan(image_true=None, trained_model=None, image_size=384, BUFFER=10, preproc
     return final
 
 
+@st.cache(allow_output_mutation=True)
+def save_image(scanned_output: np.array, format: str = "PNG"):
+    buffered = io.BytesIO()
+    PIL.Image.fromarray(scanned_output).save(buffered, format=format)
+    time.sleep(2)
+    return buffered
+
+
 def main(image, model=None):
     file_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)  # Read bytes
     cv_image = cv2.imdecode(file_bytes, 1)[:, :, ::-1]  # Decode and convert to RGB
@@ -224,12 +233,12 @@ def main(image, model=None):
         output = scan(image_true=cv_image, trained_model=model, image_size=IMAGE_SIZE)
         st.image(output, channels="RGB", use_column_width=True)
 
-    time.sleep(3)
-    # Download scanned file
     if output is not None:
-        cv2.imwrite(file_save_path, output[:, :, ::-1])
-        with open(file_save_path, "rb") as file:
-            st.download_button(label="Download Scanned image", data=file, file_name=f"scanned_{file_upload.name}")
+        # save image
+        buffered = save_image(scanned_output=output, format="PNG")
+
+        # Download scanned file
+        st.download_button(label="Download Scanned image", data=buffered, file_name=f"scanned_{file_upload.name}")
 
     return output
 
@@ -261,14 +270,11 @@ model = model_mbv3 if select_model == "MobilenetV3-Large" else model_r50
 tab1, tab2 = st.tabs(["Upload a Document", "Capture Document"])
 
 with tab1:
-    # with st.form("my-form", clear_on_submit=True):
-    #     file_upload = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
-    #     submitted = st.form_submit_button("Scan!")
-    # if submitted and file_upload is not None:
-    #     output = main(file_upload, model=model)
+    with st.form("my-form", clear_on_submit=False):
+        file_upload = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
+        submitted = st.form_submit_button("Scan Document")
 
-    file_upload = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
-    if file_upload:
+    if submitted and file_upload is not None:
         _ = main(file_upload, model=model)
 
 with tab2:
