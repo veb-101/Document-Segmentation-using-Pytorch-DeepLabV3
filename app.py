@@ -221,17 +221,10 @@ def get_image_download_link(img, filename, text):
     return href
 
 
-def main(image, chosen_model=None):
+def main(image, model=None):
     # decode image
     file_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, 1)
-
-    if chosen_model == "MobilenetV3-Large":
-        model_mbv3 = load_model_DL_MBV3(img_size=IMAGE_SIZE)
-    else:
-        model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
-
-    model = model_mbv3 if chosen_model == "MobilenetV3-Large" else model_r50
 
     col1, col2 = st.columns((6, 5))
 
@@ -244,11 +237,7 @@ def main(image, chosen_model=None):
         output = scan(image_true=image, trained_model=model, image_size=IMAGE_SIZE)
         st.image(output, channels="BGR", use_column_width=True)
 
-    if output is not None:
-        # Display Download link.
-        result = Image.fromarray(output[:, :, ::-1])
-        st.markdown(get_image_download_link(result, "output.png", "Download " + "Output"), unsafe_allow_html=True)
-    return
+    return output
 
 
 # We create a downloads directory within the streamlit static asset directory
@@ -263,6 +252,7 @@ image = None
 output = None
 result = None
 
+
 # Streamlit Components
 st.set_page_config(
     page_title="Document Segmentation using Pytorch | LearnOpenCV",
@@ -274,24 +264,26 @@ st.set_page_config(
 
 st.title("Document Scanner: Semantic Segmentation using DeepLabV3-PyTorch")
 
+model_mbv3 = load_model_DL_MBV3(img_size=IMAGE_SIZE)
+model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
+
+select_model = st.radio("Select Document Segmentation Model:", ("MobilenetV3-Large", "Resnet-50"), horizontal=True)
+model = model_mbv3 if select_model == "MobilenetV3-Large" else model_r50
 
 tab1, tab2 = st.tabs(["Upload a Document", "Capture Document"])
 
-
 with tab1:
-    tab_1_model = st.radio("Select Document Segmentation Model:", ("MobilenetV3-Large", "Resnet-50"), horizontal=True, key="tab1")
+    # with st.form("my-form", clear_on_submit=True):
+    #     submitted = st.form_submit_button("Scan!")
+    # if submitted and uploaded_file is not None:
+    #     output = main(uploaded_file, model=model)
 
-    with st.form("my-form", clear_on_submit=True):
-        uploaded_file = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
-        submitted = st.form_submit_button("Scan!")
-
-    if submitted and uploaded_file is not None:
-        main(uploaded_file, chosen_model=tab_1_model)
-
+    uploaded_file = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
+    if uploaded_file:
+        output = main(uploaded_file, model=model)
 
 with tab2:
-    tab_2_model = st.radio("Select Document Segmentation Model:", ("MobilenetV3-Large", "Resnet-50"), horizontal=True, key="tab2")
     uploaded_file = st.camera_input("Capture Document Image :")
 
     if uploaded_file:
-        main(uploaded_file, chosen_model=tab_1_model)
+        output = main(uploaded_file, model=model)
