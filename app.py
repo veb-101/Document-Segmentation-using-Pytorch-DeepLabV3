@@ -11,6 +11,7 @@ import subprocess
 import numpy as np
 from PIL import Image
 import streamlit as st
+from streamlit_drawable_canvas import st_canvas
 
 
 try:
@@ -283,8 +284,10 @@ with tab1:
         output = main(uploaded_file, model=model)
 
 with tab2:
+    run = st.checkbox("Start Camera")
 
-    uploaded_file = st.camera_input("Capture Document")
+    if run:
+        uploaded_file = st.camera_input("Capture Document", disabled=not run)
 
-    if uploaded_file:
-        output = main(uploaded_file, model=model)
+        if uploaded_file:
+            output = main(uploaded_file, model=model)
