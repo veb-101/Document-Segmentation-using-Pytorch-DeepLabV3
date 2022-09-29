@@ -1,2 +1,3 @@
 opencv-python-headless
 streamlit
+streamlit-drawable-canvas
