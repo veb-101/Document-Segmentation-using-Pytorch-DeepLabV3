@@ -283,47 +283,8 @@ with tab1:
         output = main(uploaded_file, model=model)
 
 with tab2:
-    # Click if you want to run the application.
-    # Change button style.
-    m = st.markdown(
-        """
-        <style>
-        div.stButton > button:first-child {
-            background-color: #00ff00;
-            color:#000000;
-            font-weight: bold;
-            font-size: 18px;
-            padding: 4px 15px;
-        }
 
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    run_btn_container = st.empty()
-    run = run_btn_container.button("Start Camera?")
+    uploaded_file = st.camera_input("Capture Document")
 
-    uploaded_file = st.camera_input("Capture Document", disabled=not run, label_visibility="visible")
-
-    if run:
-        # Change button text.
-        m = st.markdown(
-            """
-            <style>
-            div.stButton > button:first-child {
-                background-color: #dd0000;
-                color:#ffffff;
-                font-weight: bold;
-                font-size: 18px;
-                padding: 4px 20px;
-            }
-
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        run_btn_container.empty()
-        run_btn_container.button("Stop Camera")
-
-        if uploaded_file:
-            output = main(uploaded_file, model=model)
+    if uploaded_file:
+        output = main(uploaded_file, model=model)
