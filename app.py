@@ -224,6 +224,7 @@ def main(image, model=None):
         output = scan(image_true=cv_image, trained_model=model, image_size=IMAGE_SIZE)
         st.image(output, channels="RGB", use_column_width=True)
 
+    time.sleep(3)
     # Download scanned file
     if output is not None:
         cv2.imwrite(file_save_path, output[:, :, ::-1])
