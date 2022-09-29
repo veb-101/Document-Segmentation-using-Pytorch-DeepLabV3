@@ -247,11 +247,6 @@ DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
 if not DOWNLOADS_PATH.is_dir():
     DOWNLOADS_PATH.mkdir()
 
-IMAGE_SIZE = 384
-image = None
-output = None
-result = None
-
 
 # Streamlit Components
 st.set_page_config(
@@ -263,6 +258,11 @@ st.set_page_config(
 )
 
 st.title("Document Scanner: Semantic Segmentation using DeepLabV3-PyTorch")
+
+IMAGE_SIZE = 384
+image = None
+output = None
+result = None
 
 model_mbv3 = load_model_DL_MBV3(img_size=IMAGE_SIZE)
 model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
