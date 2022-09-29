@@ -226,7 +226,7 @@ def main(image, model=None):
     file_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, 1)
 
-    col1, col2 = st.columns((6, 5))
+    col1, col2 = st.columns((1, 1))
 
     with col1:
         st.title("Input")
