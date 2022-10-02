@@ -69,8 +69,8 @@ def main(input_file, procedure, image_size=384):
 st.set_page_config(
     page_title="Document Scanner | LearnOpenCV",
     page_icon="https://learnopencv.com/wp-content/uploads/2017/12/favicon.png",
-    layout="centered",  # centered, wide
-    initial_sidebar_state="expanded",
+    layout="wide",  # centered, wide
+    # initial_sidebar_state="expanded",
     menu_items={"About": "### Visit www.learnopencv.com for more exciting tutorials!!!",},
 )
 
