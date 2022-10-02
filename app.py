@@ -43,6 +43,8 @@ def main(input_file, procedure, image_size=384):
     file_bytes = np.asarray(bytearray(input_file.read()), dtype=np.uint8)  # Read bytes
     image = cv2.imdecode(file_bytes, 1)[:, :, ::-1]  # Decode and convert to RGB
 
+    st.write("Input image size:", image.shape)
+
     col1, col2 = st.columns((1, 1))
 
     with col1:
