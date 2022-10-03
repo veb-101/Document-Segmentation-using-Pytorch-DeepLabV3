@@ -8,7 +8,6 @@ import time
 import subprocess
 import numpy as np
 import streamlit as st
-from torch import manual_seed
 
 
 try:
