@@ -1,5 +1,4 @@
 import base64
-import os
 import io
 import gc
 import cv2

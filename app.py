@@ -1,7 +1,5 @@
 # Install CPU version of torch and torchvision on streamlit cloud
 import os
-import io
-import gc
 import cv2
 import sys
 import time
