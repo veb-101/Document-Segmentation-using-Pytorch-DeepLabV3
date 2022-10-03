@@ -35,13 +35,51 @@ if not os.path.exists(os.path.join(os.getcwd(), "model_r50_iou_mix_2C020.pth")):
 # ------------------------------------------------------------
 
 
-from utility_functions import load_model_DL_MBV3, load_model_DL_R50, get_image_download_link, deep_learning_scan, traditional_scan, manual_scan
+from torchvision.models.segmentation import deeplabv3_mobilenet_v3_large, deeplabv3_resnet50
+from utility_functions import traditional_scan, deep_learning_scan, manual_scan, get_image_download_link
+
+
+# Streamlit Components
+st.set_page_config(
+    page_title="Document Scanner | LearnOpenCV",
+    page_icon="https://learnopencv.com/wp-content/uploads/2017/12/favicon.png",
+    layout="centered",  # centered, wide
+    # initial_sidebar_state="expanded",
+    menu_items={"About": "### Visit www.learnopencv.com for more exciting tutorials!!!",},
+)
+
+
+@st.cache(allow_output_mutation=True)
+def load_model_DL_MBV3(num_classes=2, device=torch.device("cpu"), img_size=384):
+    checkpoint_path = os.path.join(os.getcwd(), "model_mbv3_iou_mix_2C049.pth")
+    checkpoints = torch.load(checkpoint_path, map_location=device)
+
+    model = deeplabv3_mobilenet_v3_large(num_classes=num_classes, aux_loss=True).to(device)
+    model.load_state_dict(checkpoints, strict=False)
+    model.eval()
+    with torch.no_grad():
+        _ = model(torch.randn((1, 3, img_size, img_size)))
+    return model
+
+
+@st.cache(allow_output_mutation=True)
+def load_model_DL_R50(num_classes=2, device=torch.device("cpu"), img_size=384):
+    checkpoint_path = os.path.join(os.getcwd(), "model_r50_iou_mix_2C020.pth")
+    checkpoints = torch.load(checkpoint_path, map_location=device)
+
+    model = deeplabv3_resnet50(num_classes=num_classes, aux_loss=True).to(device)
+    model.load_state_dict(checkpoints, strict=False)
+    model.eval()
+    with torch.no_grad():
+        _ = model(torch.randn((1, 3, img_size, img_size)))
+    return model
 
 
 def main(input_file, procedure, image_size=384):
 
     file_bytes = np.asarray(bytearray(input_file.read()), dtype=np.uint8)  # Read bytes
     image = cv2.imdecode(file_bytes, 1)[:, :, ::-1]  # Decode and convert to RGB
+    output = None
 
     st.write("Input image size:", image.shape)
 
@@ -66,23 +104,17 @@ def main(input_file, procedure, image_size=384):
 
             st.image(output, channels="RGB", use_column_width=True)
 
+    if output is not None:
+        st.markdown(get_image_download_link(output, f"scanned_{input_file.name}", "Download scanned File"), unsafe_allow_html=True)
+
     return output
 
-
-# Streamlit Components
-st.set_page_config(
-    page_title="Document Scanner | LearnOpenCV",
-    page_icon="https://learnopencv.com/wp-content/uploads/2017/12/favicon.png",
-    layout="centered",  # centered, wide
-    # initial_sidebar_state="expanded",
-    menu_items={"About": "### Visit www.learnopencv.com for more exciting tutorials!!!",},
-)
 
 IMAGE_SIZE = 384
 model_mbv3 = load_model_DL_MBV3(img_size=IMAGE_SIZE)
 model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
 
-st.title("Document Scanner")
+st.markdown("<h1 style='text-align: center;'>Document Scanner</h1>", unsafe_allow_html=True)
 
 procedure_selected = st.radio("Select Scanning Procedure:", ("Traditional", "Deep Learning", "Manual"), index=1, horizontal=True)
 
@@ -94,23 +126,15 @@ tab1, tab2 = st.tabs(["Upload a Document", "Capture Document"])
 
 with tab1:
     file_upload = st.file_uploader("Upload Document Image :", type=["jpg", "jpeg", "png"])
-    output = None
 
     if file_upload is not None:
-        output = main(input_file=file_upload, procedure=procedure_selected, image_size=IMAGE_SIZE)
-
-        if output is not None:
-            st.markdown(get_image_download_link(output, f"scanned_{file_upload.name}", "Download scanned File"), unsafe_allow_html=True)
+        _ = main(input_file=file_upload, procedure=procedure_selected, image_size=IMAGE_SIZE)
 
 
 with tab2:
-    output = None
     run = st.checkbox("Start Camera")
 
     if run:
         file_upload = st.camera_input("Capture Document", disabled=not run)
         if file_upload is not None:
-            output = main(input_file=file_upload, procedure=procedure_selected, image_size=IMAGE_SIZE)
-
-            if output is not None:
-                st.markdown(get_image_download_link(output, f"scanned_{file_upload.name}", "Download scanned File"), unsafe_allow_html=True)
+            _ = main(input_file=file_upload, procedure=procedure_selected, image_size=IMAGE_SIZE)

@@ -12,44 +12,17 @@ from streamlit_drawable_canvas import st_canvas
 
 import torch
 import torchvision.transforms as torchvision_T
-from torchvision.models.segmentation import deeplabv3_mobilenet_v3_large, deeplabv3_resnet50
-
-
-@st.cache(allow_output_mutation=True)
-def load_model_DL_MBV3(num_classes=2, device=torch.device("cpu"), img_size=384):
-    checkpoint_path = os.path.join(os.getcwd(), "model_mbv3_iou_mix_2C049.pth")
-    checkpoints = torch.load(checkpoint_path, map_location=device)
-
-    model = deeplabv3_mobilenet_v3_large(num_classes=num_classes, aux_loss=True).to(device)
-    model.load_state_dict(checkpoints, strict=False)
-    model.eval()
-    with torch.no_grad():
-        _ = model(torch.randn((1, 3, img_size, img_size)))
-    return model
-
-
-@st.cache(allow_output_mutation=True)
-def load_model_DL_R50(num_classes=2, device=torch.device("cpu"), img_size=384):
-    checkpoint_path = os.path.join(os.getcwd(), "model_r50_iou_mix_2C020.pth")
-    checkpoints = torch.load(checkpoint_path, map_location=device)
-
-    model = deeplabv3_resnet50(num_classes=num_classes, aux_loss=True).to(device)
-    model.load_state_dict(checkpoints, strict=False)
-    model.eval()
-    with torch.no_grad():
-        _ = model(torch.randn((1, 3, img_size, img_size)))
-    return model
-
 
 # Generating a link to download a particular image file.
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def get_image_download_link(img, filename, text):
-    img = PIL.Image.fromarray(img)
-    buffered = io.BytesIO()
-    img.save(buffered, format="JPEG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
-    href = f'<a href="data:file/txt;base64,{img_str}" download="{filename}">{text}</a>'
-    time.sleep(2)
+    with st.spinner("Generating download link"):
+        img = PIL.Image.fromarray(img)
+        buffered = io.BytesIO()
+        img.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        href = f'<a href="data:file/txt;base64,{img_str}" download="{filename}">{text}</a>'
+        time.sleep(2)
     return href
 
 
@@ -95,7 +68,6 @@ def image_preprocess_transforms(mean=(0.4611, 0.4359, 0.3905), std=(0.2193, 0.21
     return common_transforms
 
 
-@st.cache(allow_output_mutation=True)
 def generate_output(image: np.array, corners: list, scale: tuple = None, resize_shape: int = 640):
     corners = order_points(corners)
 
