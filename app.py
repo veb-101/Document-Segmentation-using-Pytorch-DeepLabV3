@@ -18,7 +18,7 @@ try:
 except ModuleNotFoundError as e:
     subprocess.Popen([f"{sys.executable} -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu"], shell=True)
     # wait for subprocess to install package before running your actual code below
-    time.sleep(20)
+    time.sleep(50)
 
 
 # ------------------------------------------------------------
@@ -85,7 +85,7 @@ model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
 
 st.title("Document Scanner")
 
-procedure_selected = st.radio("Select Scanning Procedure:", ("Traditional", "Deep Learning", "Manual"), horizontal=True)
+procedure_selected = st.radio("Select Scanning Procedure:", ("Traditional", "Deep Learning", "Manual"), index=1, horizontal=True)
 
 if procedure_selected == "Deep Learning":
     model_selected = st.radio("Select Document Segmentation Backbone Model:", ("MobilenetV3-Large", "ResNet-50"), horizontal=True)
