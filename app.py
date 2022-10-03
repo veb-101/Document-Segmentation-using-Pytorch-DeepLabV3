@@ -8,6 +8,7 @@ import time
 import subprocess
 import numpy as np
 import streamlit as st
+from torch import manual_seed
 
 
 try:
@@ -35,7 +36,7 @@ if not os.path.exists(os.path.join(os.getcwd(), "model_r50_iou_mix_2C020.pth")):
 # ------------------------------------------------------------
 
 
-from utility_functions import load_model_DL_MBV3, load_model_DL_R50, get_image_download_link, deep_learning_scan, traditional_scan
+from utility_functions import load_model_DL_MBV3, load_model_DL_R50, get_image_download_link, deep_learning_scan, traditional_scan, manual_scan
 
 
 def main(input_file, procedure, image_size=384):
@@ -45,22 +46,26 @@ def main(input_file, procedure, image_size=384):
 
     st.write("Input image size:", image.shape)
 
-    col1, col2 = st.columns((1, 1))
+    if procedure == "Manual":
+        output = manual_scan(og_image=image)
 
-    with col1:
-        st.title("Input")
-        st.image(image, channels="RGB", use_column_width=True)
+    else:
+        col1, col2 = st.columns((1, 1))
 
-    with col2:
-        st.title("Scanned")
+        with col1:
+            st.title("Input")
+            st.image(image, channels="RGB", use_column_width=True)
 
-        if procedure == "Traditional":
-            output = traditional_scan(og_image=image)
-        else:
-            model = model_mbv3 if model_selected == "MobilenetV3-Large" else model_r50
-            output = deep_learning_scan(og_image=image, trained_model=model, image_size=image_size)
+        with col2:
+            st.title("Scanned")
 
-        st.image(output, channels="RGB", use_column_width=True)
+            if procedure == "Traditional":
+                output = traditional_scan(og_image=image)
+            else:
+                model = model_mbv3 if model_selected == "MobilenetV3-Large" else model_r50
+                output = deep_learning_scan(og_image=image, trained_model=model, image_size=image_size)
+
+            st.image(output, channels="RGB", use_column_width=True)
 
     return output
 
@@ -69,7 +74,7 @@ def main(input_file, procedure, image_size=384):
 st.set_page_config(
     page_title="Document Scanner | LearnOpenCV",
     page_icon="https://learnopencv.com/wp-content/uploads/2017/12/favicon.png",
-    layout="wide",  # centered, wide
+    layout="centered",  # centered, wide
     # initial_sidebar_state="expanded",
     menu_items={"About": "### Visit www.learnopencv.com for more exciting tutorials!!!",},
 )
@@ -80,7 +85,7 @@ model_r50 = load_model_DL_R50(img_size=IMAGE_SIZE)
 
 st.title("Document Scanner")
 
-procedure_selected = st.radio("Select Scanning Procedure:", ("Traditional", "Deep Learning"), horizontal=True)
+procedure_selected = st.radio("Select Scanning Procedure:", ("Traditional", "Deep Learning", "Manual"), horizontal=True)
 
 if procedure_selected == "Deep Learning":
     model_selected = st.radio("Select Document Segmentation Backbone Model:", ("MobilenetV3-Large", "ResNet-50"), horizontal=True)
@@ -96,8 +101,6 @@ with tab1:
         output = main(input_file=file_upload, procedure=procedure_selected, image_size=IMAGE_SIZE)
 
         if output is not None:
-            # buffered = save_image(scanned_output=output, format="PNG")
-            # st.download_button(label="Download Scanned image", data=buffered, file_name=f"scanned_{file_upload.name}")
             st.markdown(get_image_download_link(output, f"scanned_{file_upload.name}", "Download scanned File"), unsafe_allow_html=True)
 
 
@@ -111,6 +114,4 @@ with tab2:
             output = main(input_file=file_upload, procedure=procedure_selected, image_size=IMAGE_SIZE)
 
             if output is not None:
-                # buffered = save_image(scanned_output=output, format="PNG")
-                # st.download_button(label="Download Scanned image", data=buffered, file_name=f"scanned_{file_upload.name}")
                 st.markdown(get_image_download_link(output, f"scanned_{file_upload.name}", "Download scanned File"), unsafe_allow_html=True)

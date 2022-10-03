@@ -96,8 +96,13 @@ def image_preprocess_transforms(mean=(0.4611, 0.4359, 0.3905), std=(0.2193, 0.21
 
 
 @st.cache(allow_output_mutation=True)
-def generate_output(image, corners, scale: tuple = None):
+def generate_output(image: np.array, corners: list, scale: tuple = None, resize_shape: int = 640):
     corners = order_points(corners)
+
+    if scale is not None:
+        print(np.array(corners).shape, scale)
+        corners = np.multiply(corners, scale)
+
     destination_corners = find_dest(corners)
     M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
     out = cv2.warpPerspective(image, M, (destination_corners[2][0], destination_corners[2][1]), flags=cv2.INTER_LANCZOS4)
@@ -106,7 +111,7 @@ def generate_output(image, corners, scale: tuple = None):
     return out
 
 
-def traditional_scan(og_image):
+def traditional_scan(og_image: np.array):
     # Resize image to workable size
     dim_limit = 1080
     max_dim = max(og_image.shape)
@@ -156,7 +161,7 @@ def traditional_scan(og_image):
     return output
 
 
-def deep_learning_scan(og_image=None, trained_model=None, image_size=384, BUFFER=10, preprocess_transforms=image_preprocess_transforms()):
+def deep_learning_scan(og_image: np.array = None, trained_model=None, image_size=384, BUFFER=10, preprocess_transforms=image_preprocess_transforms()):
     half = image_size // 2
 
     imH, imW, C = og_image.shape
@@ -263,16 +268,63 @@ def deep_learning_scan(og_image=None, trained_model=None, image_size=384, BUFFER
 #     return buffered
 
 
-# def aspect_ratio_resize(image_h, image_w, resize_to=400):
-#     asp = image_w / image_h
+def aspect_ratio_resize(image_h, image_w, resize_to=400):
+    asp = image_w / image_h
 
-#     if image_h > image_w:
-#         new_h = resize_to
-#         new_w = asp * new_h
+    if image_h > image_w:
+        new_h = resize_to
+        new_w = asp * new_h
 
-#     else:
-#         new_w = resize_to
-#         new_h = new_w / asp
+    else:
+        new_w = resize_to
+        new_h = new_w / asp
 
-#     return int(round(new_h)), int(round(new_w))
+    return int(round(new_h)), int(round(new_w))
+
+
+def manual_scan(og_image: np.array, resize_shape=640):
+
+    image_h, image_w, _ = og_image.shape
+    asp_h, asp_w = aspect_ratio_resize(image_h, image_w, resize_to=resize_shape)
+
+    scale_h = image_h / asp_h
+    scale_w = image_w / asp_w
+
+    st.markdown("###### Select 4 corners points.")
+    st.markdown(
+        """
+        ###### Steps
+        <ul>
+        <li>Left-click to begin.</li>
+        <li>Right-click when selecting the last point.</li>
+        <li>Double-click to undo last selected point.</li>
+        </ul>
+        (On mouse pads, click instead of taps.)<br><br>
+
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Create a canvas component
+    canvas_result = st_canvas(
+        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+        stroke_width=3,
+        background_image=PIL.Image.fromarray(og_image).resize((asp_h, asp_w)),
+        update_streamlit=True,
+        height=asp_h,
+        width=asp_w,
+        drawing_mode="polygon",
+        key="canvas",
+    )
+    st.caption("Happy with the manual selection?")
+
+    if st.button("Get Scanned"):
+        # Get corner points
+        corners = [i[1:3] for i in canvas_result.json_data["objects"][0]["path"][:4]]
+
+        # Generate output
+        final = generate_output(og_image, corners, scale=(scale_h, scale_w), resize_shape=resize_shape)
+        st.image(final, channels="RGB", use_column_width=True)
+
+        return final
 
