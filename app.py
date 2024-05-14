@@ -6,19 +6,7 @@ import time
 import subprocess
 import numpy as np
 import streamlit as st
-
-
-try:
-    import torch
-
-# This block executes only on the first run when your package isn't installed
-except ModuleNotFoundError as e:
-    subprocess.Popen([f"{sys.executable} -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu"], shell=True)
-    # wait for subprocess to install package before running your actual code below
-    time.sleep(30)
-
-
-# ------------------------------------------------------------
+import torch
 from torchvision.datasets.utils import download_file_from_google_drive
 
 # Download trained models
@@ -43,11 +31,13 @@ st.set_page_config(
     page_icon="https://learnopencv.com/wp-content/uploads/2017/12/favicon.png",
     layout="centered",  # centered, wide
     # initial_sidebar_state="expanded",
-    menu_items={"About": "### Visit www.learnopencv.com for more exciting tutorials!!!",},
+    menu_items={
+        "About": "### Visit www.learnopencv.com for more exciting tutorials!!!",
+    },
 )
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_model_DL_MBV3(num_classes=2, device=torch.device("cpu"), img_size=384):
     checkpoint_path = os.path.join(os.getcwd(), "model_mbv3_iou_mix_2C049.pth")
     checkpoints = torch.load(checkpoint_path, map_location=device)
@@ -60,7 +50,7 @@ def load_model_DL_MBV3(num_classes=2, device=torch.device("cpu"), img_size=384):
     return model
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_model_DL_R50(num_classes=2, device=torch.device("cpu"), img_size=384):
     checkpoint_path = os.path.join(os.getcwd(), "model_r50_iou_mix_2C020.pth")
     checkpoints = torch.load(checkpoint_path, map_location=device)
@@ -74,7 +64,6 @@ def load_model_DL_R50(num_classes=2, device=torch.device("cpu"), img_size=384):
 
 
 def main(input_file, procedure, image_size=384):
-
     file_bytes = np.asarray(bytearray(input_file.read()), dtype=np.uint8)  # Read bytes
     image = cv2.imdecode(file_bytes, 1)[:, :, ::-1]  # Decode and convert to RGB
     output = None
