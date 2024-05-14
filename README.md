@@ -8,4 +8,5 @@ Blog posts:
  2. [Document Scanner using Semantic Segmentation Architecture DeepLabV3 | LearnOpenCV](https://learnopencv.com/deep-learning-based-document-segmentation-using-semantic-segmentation-deeplabv3-on-custom-dataset/)
  
 
-Streamlit app: https://veb-101-document-segmentation-using-pytorch-deeplabv-app-wjymlo.streamlitapp.com/
+Streamlit app: [https://document-segmentation.streamlit.app/](https://document-segmentation.streamlit.app/)
+
